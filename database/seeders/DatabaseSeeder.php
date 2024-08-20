@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Reservation;
+use App\Models\Review;
 use App\Models\Room;
 use App\Models\RoomImage;
 use Illuminate\Database\Seeder;
@@ -17,10 +18,12 @@ class DatabaseSeeder extends Seeder
     public function run()
     {
         // \App\Models\User::factory(10)->create();
-        Room::factory()
-            ->has(RoomImage::factory()->count(5), 'images')
-            ->has(Reservation::factory()->count(3), 'reservations')
-            ->count(10)
-            ->create();
+        // Room::factory()
+        //     ->has(RoomImage::factory()->count(5), 'images')
+        //     ->has(Reservation::factory()->count(3), 'reservations')
+        //     ->count(10)
+        //     ->create();
+
+        Review::factory(20)->create();
     }
 }

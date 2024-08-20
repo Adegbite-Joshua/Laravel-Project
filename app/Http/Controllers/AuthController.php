@@ -6,12 +6,12 @@ use App\Http\Requests\StoreUserRequest;
 use App\Models\User;
 use App\Traits\HttpResponses;
 use Auth;
+use Cloudinary\Cloudinary;
 use Hash;
 use Illuminate\Http\Request;
 
 class AuthController extends Controller
 {
-
     use HttpResponses;
 
     public function login(Request $request)
@@ -42,7 +42,31 @@ class AuthController extends Controller
     {
         $request->validated($request->all());
 
-        $request->merge(['password' => Hash::make($request['password'])]);
+        $imageUrl = null;
+
+        if ($request->image) {
+            if (preg_match('/^data:image\/(\w+);base64,/', $request->image)) {
+                $imageData = preg_replace('/^data:image\/\w+;base64,/', '', $request->image);
+                $imageData = base64_decode($imageData);
+                $tempFilePath = tempnam(sys_get_temp_dir(), 'cloudinary_upload');
+                file_put_contents($tempFilePath, $imageData);
+
+                $uploadedFile = $this->cloudinary->uploadApi()->upload($tempFilePath, [
+                    'folder' => 'user_images',
+                ]);
+
+                unlink($tempFilePath);
+                $imageUrl = $uploadedFile['secure_url'];
+            } else {
+                $uploadedFile = $this->cloudinary->uploadApi()->upload($request->image, [
+                    'folder' => 'user_images',
+                ]);
+
+                $imageUrl = $uploadedFile['secure_url'];
+            }
+        }
+
+        $request->merge(['password' => Hash::make($request['password']), 'image'=> $imageUrl]);
 
         $user = User::create($request->all());
 
