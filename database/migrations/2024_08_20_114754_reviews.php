@@ -19,6 +19,7 @@ class Reviews extends Migration
             $table->string('review', 200);
             $table->integer('star_rating');
             $table->string('image', 225);
+            $table->timestamps();
         });
     }
 

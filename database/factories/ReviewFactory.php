@@ -16,7 +16,7 @@ class ReviewFactory extends Factory
         return [
             'name' => $this->faker->name,
             'star_rating' => $this->faker->numberBetween(0, 5),
-            'review' => $this->faker->sentences(),
+            'review' => $this->faker->sentence(),
             'image' => $this->faker->imageUrl,
         ];
     }
