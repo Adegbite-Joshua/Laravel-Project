@@ -29,6 +29,7 @@ class CreateUsersTable extends Migration
             $table->string('zip_code');
             $table->string('address');
             $table->rememberToken();
+            $table->string('role')->default('user');
             $table->timestamps();
         });
     }
