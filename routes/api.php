@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\RoomController;
+use App\Http\Controllers\TransactionController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -28,6 +29,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/user', [AuthController::class, 'user']);
         Route::resource('/rooms', RoomController::class);
         Route::resource('/bookings', BookingController::class);
+        Route::post('/paystack/initialize', [TransactionController::class, 'initializePayment']);
+        Route::get('/paystack/verify', [TransactionController::class, 'verifyPayment'])->name('payment.verify');
+
     });
 
     // Route::middleware('role:admin')->group(function () {
