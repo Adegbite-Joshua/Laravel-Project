@@ -22,6 +22,7 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::get('/rooms', [RoomController::class, 'index']);
 Route::resource('/reviews', ReviewController::class);
+Route::get('/paystack/verify', [TransactionController::class, 'verifyPayment'])->name('payment.verify');
 
 Route::middleware('auth:sanctum')->group(function () {
 
@@ -30,7 +31,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::resource('/rooms', RoomController::class);
         Route::resource('/bookings', BookingController::class);
         Route::post('/paystack/initialize', [TransactionController::class, 'initializePayment']);
-        Route::get('/paystack/verify', [TransactionController::class, 'verifyPayment'])->name('payment.verify');
 
     });
 
