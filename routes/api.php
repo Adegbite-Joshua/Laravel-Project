@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\ReviewController;
@@ -24,6 +25,9 @@ Route::get('/rooms', [RoomController::class, 'index']);
 Route::resource('/reviews', ReviewController::class);
 Route::get('/paystack/verify', [TransactionController::class, 'verifyPayment'])->name('payment.verify');
 
+Route::post('/admin/register', [AdminController::class, 'register']);
+Route::post('/login', [AdminController::class, 'login']);
+
 Route::middleware('auth:sanctum')->group(function () {
 
     Route::middleware('role:user')->group(function () {
@@ -34,9 +38,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     });
 
-    // Route::middleware('role:admin')->group(function () {
-    //     Route::get('/admin/dashboard', [AdminController::class, 'dashboard']);
-    //     // Other admin routes
-    // });
+    Route::middleware('role:admin')->group(function () {
+        Route::get('/admin/dashboard', [AdminController::class, 'dashboard']);
+        // Other admin routes
+    });
 });
 
