@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Booking;
 use App\Models\Room;
 use App\Models\Transaction;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Unicodeveloper\Paystack\Facades\Paystack;
-use Carbon\Carbon;
-
 
 class TransactionController extends Controller
 {
@@ -96,33 +96,30 @@ class TransactionController extends Controller
             'check_in_date' => 'required|date',
             'check_out_date' => 'required|date',
         ]);
-    
+
         $room = Room::find($request->roomId);
-    
+
         if (!$room) {
             return response()->json(['error' => 'Room not found'], 404);
         }
-    
+
         $checkInDate = Carbon::parse($request->check_in_date);
         $checkOutDate = Carbon::parse($request->check_out_date);
-    
-        // Check if there is an overlap with existing bookings
-        $existingBooking = Room::where('room_id', $request->roomId)
-            ->where(function($query) use ($checkInDate, $checkOutDate) {
-                $query->whereBetween('check_in_date', [$checkInDate, $checkOutDate])
-                      ->orWhereBetween('check_out_date', [$checkInDate, $checkOutDate])
-                      ->orWhere(function ($query) use ($checkInDate, $checkOutDate) {
-                          $query->where('check_in_date', '<=', $checkInDate)
-                                ->where('check_out_date', '>=', $checkOutDate);
-                      });
-            });
-            // ->exists();
-    
-        if ($existingBooking) {
-            return response()->json(['error' => 'Room is not available for the selected dates'], 409);
+
+        $bookings = Booking::where('room_id', $request->roomId)->get();
+
+        foreach ($bookings as $booking) {
+            $existingCheckIn = Carbon::parse($booking->check_in_date);
+            $existingCheckOut = Carbon::parse($booking->check_out_date);
+
+            if (
+                ($checkInDate->between($existingCheckIn, $existingCheckOut)) ||
+                ($checkOutDate->between($existingCheckIn, $existingCheckOut)) ||
+                ($checkInDate <= $existingCheckIn && $checkOutDate >= $existingCheckOut)
+            ) {
+                return response()->json(['error' => 'Room is not available for the selected dates'], 409);
+            }
         }
-    
-        // return response()->json(['success' => 'Room is available'], 200);
 
         $paymentData = [
             'amount' => $request->amount * 100,
@@ -131,11 +128,20 @@ class TransactionController extends Controller
             'callback_url' => route('payment.verify'),
         ];
 
+        $transaction = Booking::create([
+            'user_id' => auth()->user()->id,
+            'room_id' => $request->roomId,
+            'check_in_date' => $request->check_in_date,
+            'check_out_date' => $request->check_out_date,
+            'amount' => $request->amount,
+            'ref' => $paymentData['reference'],
+            'status' => 'pending',
+        ]);
+
         $authorizationUrl = Paystack::getAuthorizationUrl($paymentData)->url;
 
-
         if ($authorizationUrl) {
-            return response()->json(['authorization_url' => $authorizationUrl]);
+            return response()->json(['authorization_url' => $authorizationUrl, 'transaction' => $transaction]);
         } else {
             return response()->json(['error' => 'Payment initialization failed'], 500);
         }
@@ -143,13 +149,22 @@ class TransactionController extends Controller
 
     public function verifyPayment(Request $request)
     {
-        $transactionRef = $request->query('reference');
+        try {
+            $transactionRef = $request->query('reference');
 
-        $paymentDetails = Paystack::getPaymentData();
+            $paymentDetails = Paystack::getPaymentData();
 
-        if ($paymentDetails['status'] === true) {
-            return response()->json(['success' => true, 'data' => $paymentDetails['data']]);
-        } else {
+            if ($paymentDetails['data']['status'] === 'success') {
+                $transaction = Booking::where('ref', $transactionRef)->first();
+                // Booking::update('ref', $transactionRef)
+                // $transaction->update([
+                //    'status' => 'paid'
+                // ]);
+                return response()->json(['success' => true, 'data' => $paymentDetails, 'transaction' => $transaction]);
+            } else {
+                return response()->json(['error' => 'Payment verification failed'], 500);
+            }
+        } catch (\Throwable $th) {
             return response()->json(['error' => 'Payment verification failed'], 500);
         }
     }
