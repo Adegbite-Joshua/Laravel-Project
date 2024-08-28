@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Room;
+use App\Models\RoomImage;
 use App\Traits\HttpResponses;
 use Illuminate\Http\Request;
+use RoomsImages;
 
 class RoomController extends Controller
 {
@@ -27,7 +29,35 @@ class RoomController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        try {
+            $request->validate([
+                'name' => 'required|string',
+                'overview' => 'required|string',
+                'price' => 'required|integer',
+                'service_fee' => 'required|integer',
+                'booking_status' => 'required|string',
+                'clean_status' => 'required|boolean',
+                'type' => 'required|string',
+                'facilities' => 'required|string',
+                'category' => 'required|string',
+                'images'=> 'required|array'
+            ]);
+    
+            $images = $request->images;
+    
+            $room = Room::create($request);
+    
+            foreach ($images as $image) {
+                RoomImage::create([
+                    'room_id' => $room['id'],
+                    'image' => $image
+                ]);
+            }
+    
+            $this->success(null, "Room created successfully", 201);
+        } catch (\Throwable $th) {
+            $this->error(null, $th->getMessage(), 500);
+        }
     }
 
     /**
@@ -44,17 +74,6 @@ class RoomController extends Controller
     }
 
     /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\Room  $room
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(Room $room)
-    {
-        //
-    }
-
-    /**
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
@@ -63,7 +82,22 @@ class RoomController extends Controller
      */
     public function update(Request $request, Room $room)
     {
-        //
+        $request->validate([
+            'name' => 'string',
+            'overview' => 'string',
+            'price' => 'integer',
+            'service_fee' => 'integer',
+            'booking_status' => 'string',
+            'clean_status' => 'boolean',
+            'type' => 'string',
+            'facilities' => 'string',
+            'category' => 'string',
+            'images'=> 'array'
+        ]);
+
+        $room->update($request);
+
+        $this->success($room, "Room updated successfully",200);
     }
 
     /**

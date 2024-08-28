@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreAdminRequest;
 use App\Models\Admin;
 use App\Models\User;
 use App\Traits\HttpResponses;
@@ -11,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 
 class AdminController extends Controller
 {
+    protected $table = 'admins';
     use HttpResponses;
 
     public function login(Request $request)
@@ -37,35 +39,36 @@ class AdminController extends Controller
 
     }
 
-    public function register(Request $request)
+    public function register(StoreAdminRequest $request)
     {
         $request->validated($request->all());
 
-        $imageUrl = null;
+        // $imageUrl = null;
+        $imageUrl = $request->image;
 
-        if ($request->image) {
-            if (preg_match('/^data:image\/(\w+);base64,/', $request->image)) {
-                $imageData = preg_replace('/^data:image\/\w+;base64,/', '', $request->image);
-                $imageData = base64_decode($imageData);
-                $tempFilePath = tempnam(sys_get_temp_dir(), 'cloudinary_upload');
-                file_put_contents($tempFilePath, $imageData);
+        // if ($request->image) {
+        //     if (preg_match('/^data:image\/(\w+);base64,/', $request->image)) {
+        //         $imageData = preg_replace('/^data:image\/\w+;base64,/', '', $request->image);
+        //         $imageData = base64_decode($imageData);
+        //         $tempFilePath = tempnam(sys_get_temp_dir(), 'cloudinary_upload');
+        //         file_put_contents($tempFilePath, $imageData);
 
-                $uploadedFile = $this->cloudinary->uploadApi()->upload($tempFilePath, [
-                    'folder' => 'admin_images',
-                ]);
+        //         $uploadedFile = $this->cloudinary->uploadApi()->upload($tempFilePath, [
+        //             'folder' => 'admin_images',
+        //         ]);
 
-                unlink($tempFilePath);
-                $imageUrl = $uploadedFile['secure_url'];
-            } else {
-                $uploadedFile = $this->cloudinary->uploadApi()->upload($request->image, [
-                    'folder' => 'admin_images',
-                ]);
+        //         unlink($tempFilePath);
+        //         $imageUrl = $uploadedFile['secure_url'];
+        //     } else {
+        //         $uploadedFile = $this->cloudinary->uploadApi()->upload($request->image, [
+        //             'folder' => 'admin_images',
+        //         ]);
 
-                $imageUrl = $uploadedFile['secure_url'];
-            }
-        }
+        //         $imageUrl = $uploadedFile['secure_url'];
+        //     }
+        // }
 
-        $request->merge(['password' => Hash::make($request['password']), 'image'=> $imageUrl]);
+        $request->merge(['password' => Hash::make($request['password']), 'image'=> $imageUrl, 'nin_number' => "1234567898"]);
 
         $admin = Admin::create($request->all());
 

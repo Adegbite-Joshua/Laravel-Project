@@ -26,20 +26,20 @@ Route::resource('/reviews', ReviewController::class);
 Route::get('/paystack/verify', [TransactionController::class, 'verifyPayment'])->name('payment.verify');
 
 Route::post('/admin/register', [AdminController::class, 'register']);
-Route::post('/login', [AdminController::class, 'login']);
+Route::post('/admin/login', [AdminController::class, 'login']);
 
 Route::middleware('auth:sanctum')->group(function () {
 
     Route::middleware('role:user')->group(function () {
         Route::get('/user', [AuthController::class, 'user']);
-        Route::resource('/rooms', RoomController::class);
-        Route::resource('/bookings', BookingController::class);
+        Route::resource('/rooms', RoomController::class)->only(['index', 'show']);
+        Route::resource('/bookings', BookingController::class)->only(['store', 'show']);
         Route::post('/paystack/initialize', [TransactionController::class, 'initializePayment']);
 
     });
 
     Route::middleware('role:admin')->group(function () {
-        Route::get('/admin/dashboard', [AdminController::class, 'dashboard']);
+        Route::get('/admin/details', [AdminController::class, 'user']);
         // Other admin routes
     });
 });

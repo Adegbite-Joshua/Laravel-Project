@@ -24,7 +24,6 @@ class CreateAdminsTable extends Migration
             $table->string('telephone');
             $table->boolean('used_google_oauth')->default(false);
             $table->enum('gender', ['male','female']);
-            $table->string('nin_number');
             $table->string('city');
             $table->string('zip_code');
             $table->string('address');

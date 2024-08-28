@@ -15,13 +15,13 @@ class Rooms extends Migration
             $table->integer('price');
             $table->integer('service_fee');
             $table->string('booking_status', 15);
-            $table->string('clean_status', 15);
+            $table->string('clean_status', 15)->default('clean');
             $table->tinyInteger('star_rating')->unsigned();
             $table->string('type', 15);
             $table->string('next_free', 15);
             $table->string('facilities', 150);
             $table->string('category', 15);
-            $table->boolean('occupied');
+            $table->boolean('occupied')->default(false);
             $table->date('check_in_date')->nullable();
             $table->date('check_out_date')->nullable();
             $table->timestamps();

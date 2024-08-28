@@ -25,7 +25,6 @@ class AdminFactory extends Factory
             'telephone'=> $this->faker->phoneNumber(),
             'used_google_oauth'=> $this->faker->boolean(),
             'gender'=> $this->faker->randomElement(['male','female']),
-            'nin_number'=> Str::random(12),
             'city'=> $this->faker->city(),
             'zip_code'=> $this->faker->postcode(),
             'address'=> $this->faker->address()

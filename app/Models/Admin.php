@@ -11,6 +11,7 @@ use Laravel\Sanctum\HasApiTokens;
 class Admin extends Authenticatable implements MustVerifyEmail
 {
     use HasApiTokens, HasFactory, Notifiable;
+    protected $table = 'admins';
 
     /**
      * The attributes that are mass assignable.
