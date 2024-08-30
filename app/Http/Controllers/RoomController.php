@@ -82,6 +82,12 @@ class RoomController extends Controller
      */
     public function update(Request $request, Room $room)
     {
+        if (!$room) {
+            return response()->json([
+                'message' => 'Room not found',
+            ], 404);
+        }
+
         $request->validate([
             'name' => 'string',
             'overview' => 'string',
@@ -97,7 +103,7 @@ class RoomController extends Controller
 
         $room->update($request);
 
-        $this->success($room, "Room updated successfully",200);
+        $this->success($room, "Room updated successfully", 200);
     }
 
     /**
@@ -108,6 +114,8 @@ class RoomController extends Controller
      */
     public function destroy(Room $room)
     {
-        //
+        $room->delete();
+
+        $this->success(null, 'Room deleted successfully', 200);
     }
 }

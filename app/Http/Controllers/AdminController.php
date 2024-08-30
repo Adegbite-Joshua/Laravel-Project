@@ -4,11 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreAdminRequest;
 use App\Models\Admin;
+use App\Models\Booking;
+use App\Models\Room;
 use App\Models\User;
 use App\Traits\HttpResponses;
+use Carbon\Carbon;
 use Hash;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class AdminController extends Controller
 {
@@ -22,13 +26,13 @@ class AdminController extends Controller
             'password' => ['required', 'string'],
         ]);
 
-        if (!Auth::attempt($request->only('email', 'password'))) {
+        if (!Auth::guard('admin')->attempt($request->only('email', 'password'))) {
             return $this->error("", "Credentials do not match", 401);
         }
 
-        $admin = Admin::where('email', $request->email)->first();
+        $admin = Auth::guard('admin')->user();
 
-        return $this->success("Account created successfully", [
+        return $this->success("Login successful", [
             "admin" => $admin,
             "token" => $admin->createToken("login token for " . $admin->id)->plainTextToken,
         ]);
@@ -43,32 +47,9 @@ class AdminController extends Controller
     {
         $request->validated($request->all());
 
-        // $imageUrl = null;
-        $imageUrl = $request->image;
+        $imageUrl = $this->saveFile($request->image, 'admin_images');
 
-        // if ($request->image) {
-        //     if (preg_match('/^data:image\/(\w+);base64,/', $request->image)) {
-        //         $imageData = preg_replace('/^data:image\/\w+;base64,/', '', $request->image);
-        //         $imageData = base64_decode($imageData);
-        //         $tempFilePath = tempnam(sys_get_temp_dir(), 'cloudinary_upload');
-        //         file_put_contents($tempFilePath, $imageData);
-
-        //         $uploadedFile = $this->cloudinary->uploadApi()->upload($tempFilePath, [
-        //             'folder' => 'admin_images',
-        //         ]);
-
-        //         unlink($tempFilePath);
-        //         $imageUrl = $uploadedFile['secure_url'];
-        //     } else {
-        //         $uploadedFile = $this->cloudinary->uploadApi()->upload($request->image, [
-        //             'folder' => 'admin_images',
-        //         ]);
-
-        //         $imageUrl = $uploadedFile['secure_url'];
-        //     }
-        // }
-
-        $request->merge(['password' => Hash::make($request['password']), 'image'=> $imageUrl, 'nin_number' => "1234567898"]);
+        $request->merge(['password' => Hash::make($request['password']), 'image' => $imageUrl, 'nin_number' => "1234567898"]);
 
         $admin = Admin::create($request->all());
 
@@ -77,8 +58,56 @@ class AdminController extends Controller
         ], "Account created successfully");
     }
 
+    public function user()
+    {
+        return $this->success(Auth::guard('admin')->user(), null, 200);
+    }
 
-    public function user() {
-        return $this->success(Auth::user(), null, 200);
+    public function getMetrics(Request $request)
+    {
+        $created_today = Booking::whereDate('created_at', Carbon::today())->count();
+        $checked_out_today = Booking::where('status', 'check_out')->whereDate('updated_at', Carbon::today())->count();
+        $available_rooms = Room::where('occupied', false)->count();
+        $all_rooms = Room::count();
+
+        $single_metric = Booking::whereHas('room', function ($query) {
+            $query->where('category', 'Single');
+        })->count();
+        $double_metric = Booking::whereHas('room', function ($query) {
+            $query->where('category', 'Double');
+        })->count();
+        $suite_metric = Booking::whereHas('room', function ($query) {
+            $query->where('category', 'Suite');
+        })->count();
+        $vip_metric = Booking::whereHas('room', function ($query) {
+            $query->where('category', 'VIP');
+        })->count();
+
+        $currentYear = Carbon::now()->year;
+
+        $bookingsByMonth = Booking::selectRaw('MONTH(created_at) as month, COUNT(*) as count')
+            ->whereYear('created_at', $currentYear)
+            ->groupBy(DB::raw('MONTH(created_at)'))
+            ->pluck('count', 'month');
+
+        $monthlyBookings = array_fill(1, 12, 0);
+
+        foreach ($bookingsByMonth as $month => $count) {
+            $monthlyBookings[$month] = $count;
+        }
+
+        $this->success([
+            'check_in' => $created_today,
+            'check_out' => $checked_out_today,
+            'available_rooms' => $available_rooms,
+            'occupied_rooms' => $all_rooms - $available_rooms,
+            'room_metrics' => [
+                'Single' => $single_metric,
+                'Double' => $double_metric,
+                'Suite' => $suite_metric,
+                'VIP' => $vip_metric,
+            ],
+            'monthlyBookings'=> $monthlyBookings
+        ]);
     }
 }
