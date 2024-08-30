@@ -26,7 +26,7 @@ class StoreAdminRequest extends FormRequest
         return [
             'first_name'=> ["required", "string", "max:40"],
             'last_name'=> ["required", "string", "max:40"],
-            'email'=> ["required", "email", "max:100", "unique:users"],
+            'email'=> ["required", "email", "max:100", "unique:admins"],
             'password' => ["required", "string"],
             'image' => ["required", "string"],
             'used_google_oauth' => ["boolean"],

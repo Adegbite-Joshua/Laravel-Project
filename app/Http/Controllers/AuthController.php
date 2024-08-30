@@ -3,12 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreUserRequest;
+use App\Mail\CustomEmail;
 use App\Models\User;
 use App\Traits\HttpResponses;
 use Auth;
+use Carbon\Carbon;
 use Cloudinary\Cloudinary;
 use Hash;
 use Illuminate\Http\Request;
+use Mail;
+use URL;
 
 class AuthController extends Controller
 {
@@ -69,6 +73,59 @@ class AuthController extends Controller
         $request->merge(['password' => Hash::make($request['password']), 'image'=> $imageUrl]);
 
         $user = User::create($request->all());
+        $verificationUrl = URL::temporarySignedRoute(
+            'verification.verify',
+            Carbon::now()->addMinutes(60),
+            ['id' => $user->id, 'hash' => sha1($user->email)]
+        );
+        $details = [
+            'title' => 'Welcome to [Hotel Name]!',
+            'body' => '
+                <div style="font-family: Arial, sans-serif; color: #333;">
+                    <h1 style="color: #4CAF50;">Welcome to [Hotel Name]!</h1>
+                    <p>Dear [Guest Name],</p>
+                    <p>Thank you for signing up at [Hotel Name]! We are excited to have you with us. To complete your registration, please verify your email address by clicking the link below.</p>
+                    
+                    <div style="text-align: center; margin: 20px 0;">
+                        <a href="'.$verificationUrl.'" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Verify Your Email Address</a>
+                    </div>
+                    
+                    <p>Once your email is verified, you\'ll have access to exclusive offers, early bookings, and personalized services tailored just for you.</p>
+        
+                    <img src="https://example.com/welcome-image.jpg" alt="Welcome to [Hotel Name]" style="width: 100%; height: auto; margin-top: 20px;"/>
+        
+                    <h2 style="color: #4CAF50;">Your Journey Begins Here</h2>
+                    <p>As a valued member of our community, we look forward to providing you with an exceptional experience at [Hotel Name]. Whether for a relaxing vacation or a business trip, we have everything you need to make your stay unforgettable.</p>
+        
+                    <p style="font-style: italic;">"Travel is the only thing you buy that makes you richer." - Anonymous</p>
+        
+                    <h3 style="color: #4CAF50;">Explore Our Amenities:</h3>
+                    <ul>
+                        <li>Luxurious Rooms & Suites</li>
+                        <li>Fine Dining & Gourmet Cuisine</li>
+                        <li>Spa & Wellness Center</li>
+                        <li>State-of-the-Art Fitness Facilities</li>
+                        <li>Concierge & Tour Services</li>
+                    </ul>
+        
+                    <p>If you have any questions or need assistance, please do not hesitate to contact us.</p>
+        
+                    <p>Warm regards,</p>
+                    <p>The [Hotel Name] Team</p>
+                    
+                    <div style="text-align: center; margin-top: 30px;">
+                        <a href="https://example.com/book-now" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Book Your Stay Now</a>
+                    </div>
+        
+                    <p style="margin-top: 20px; font-size: 12px; color: #777;">
+                        © [Year] [Hotel Name]. All rights reserved. | <a href="https://example.com/privacy-policy" style="color: #4CAF50;">Privacy Policy</a>
+                    </p>
+                </div>
+            ',
+        ];
+        
+        
+        Mail::to($user->email)->send(new CustomEmail($details));
 
         return $this->success([
             "user" => $user,

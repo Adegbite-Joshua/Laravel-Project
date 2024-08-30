@@ -15,6 +15,7 @@ class Rooms extends Migration
             $table->integer('price');
             $table->integer('service_fee');
             $table->string('booking_status', 15);
+            $table->integer('floor')->default(001);
             $table->string('clean_status', 15)->default('clean');
             $table->tinyInteger('star_rating')->unsigned();
             $table->enum('type', ['Single', 'Double', 'Suite', 'VIP'])->default('Single');
