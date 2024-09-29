@@ -27,6 +27,8 @@ class CreateAdminsTable extends Migration
             $table->string('city');
             $table->string('zip_code');
             $table->string('address');
+            $table->string('otp')->nullable();
+            $table->string('otp_expires_at')->nullable();
             $table->rememberToken();
             $table->string('role')->default('admin');
             $table->timestamps();

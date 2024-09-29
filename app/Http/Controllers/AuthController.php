@@ -29,12 +29,12 @@ class AuthController extends Controller
             return $this->error("", "Credentials do not match", 401);
         }
 
-        $user = User::where('email', $request->email)->first();
+        $user = User::where('email', $request->email)->with(['bookings'])->first();
 
-        return $this->success("Account created successfully", [
+        return $this->success([
             "user" => $user,
             "token" => $user->createToken("login token for " . $user->id)->plainTextToken,
-        ]);
+        ], "Account created successfully");
     }
 
     public function logout(Request $request)
@@ -133,6 +133,9 @@ class AuthController extends Controller
     }
 
     public function user() {
-        return $this->success(Auth::user(), null, 200);
+        $user = User::where('email', Auth::user()->email)->with(['bookings'])->first();
+
+        // return $this->success(Auth::user(), null, 200);
+        return $this->success($user, null, 200);
     }
 }

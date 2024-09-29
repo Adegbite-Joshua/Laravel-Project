@@ -18,7 +18,20 @@ class RoomController extends Controller
      */
     public function index()
     {
-        return $this->success(Room::with(['images', 'reservations'])->get(), null, 200);
+        return $this->success(
+            Room::with(['images' => function ($query) {
+                $query->select('id', 'image', 'room_id'); // Select only necessary columns
+            }, 'reservations'])->get()->map(function ($room) {
+                // Convert the Room model to an array and add the images as an additional key
+                $roomData = $room->toArray(); // Convert the Room instance to an array
+                $roomData['images'] = $room->images->pluck('image'); // Add the images
+        
+                return $roomData;
+            }),
+            null,
+            200
+        );
+        
     }
 
     /**
@@ -67,11 +80,16 @@ class RoomController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function show(Room $room)
-    {
-        $room->load(['images', 'reservations']);
+{
+    $room->load(['images', 'reservations']);
 
-        return $this->success($room, null, 200);
-    }
+    $newRoom = $room->toArray();
+
+    $newRoom['images'] = $room->images->pluck('image');
+
+    return $this->success($newRoom, null, 200);
+}
+
 
     /**
      * Update the specified resource in storage.

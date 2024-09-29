@@ -44,7 +44,6 @@ class OthersController extends Controller
             'body' => $emailBody,
         ];
 
-        // Send the email to the admin
         Mail::to('admin@example.com')->send(new CustomEmail($details));
 
         return response()->json(['message' => 'Your message has been sent successfully!'], 200);

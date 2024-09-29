@@ -18,6 +18,7 @@ class Room extends Model
         'clean_status',
         'star_rating',
         'type',
+        'discount',
         'next_free',
         'facilities',
         'category',
@@ -37,6 +38,6 @@ class Room extends Model
  
      public function reservations()
      {
-         return $this->hasMany(Reservation::class);
+         return $this->hasMany(Booking::class);
      }
 }

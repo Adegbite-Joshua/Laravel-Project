@@ -22,6 +22,7 @@ class Rooms extends Migration
             $table->string('next_free', 15);
             $table->string('facilities', 150);
             $table->string('category', 15);
+            $table->integer('discount')->nullable()->default(10);
             $table->boolean('occupied')->default(false);
             $table->date('check_in_date')->nullable();
             $table->date('check_out_date')->nullable();

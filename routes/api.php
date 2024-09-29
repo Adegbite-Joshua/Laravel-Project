@@ -47,9 +47,9 @@ Route::resource('/rooms', RoomController::class)->only(['index', 'show']);
 Route::middleware('auth:sanctum')->group(function () {
 
     Route::middleware(['role:user'])->group(function () {
-        Route::get('/details', [AuthController::class, 'user']);
+        Route::get('/user/details', [AuthController::class, 'user']);
         Route::resource('/bookings', BookingController::class)->only(['store', 'show']);
-        Route::post('/paystack/initialize', [BookingController::class, 'initializePayment']);
+        Route::post('/payment/initialize', [BookingController::class, 'initializePayment']);
 
     });
 });
@@ -60,7 +60,7 @@ Route::middleware(['auth:sanctum', 'auth:admin'])->group(function () {
         Route::resource('/admin/rooms', RoomController::class);
         Route::resource('/admin/bookings', BookingController::class);
         Route::get('/admin/metrics', [AdminController::class, 'getMetrics']);
-        Route::resource('/admin/bookings', BookingController::class);
+        // Route::resource('/admin/bookings', BookingController::class);
 
     });
 });

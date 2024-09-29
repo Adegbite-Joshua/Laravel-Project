@@ -105,9 +105,10 @@ class BookingController extends Controller
             $existingCheckOut = Carbon::parse($booking->check_out_date);
 
             if (
-                ($checkInDate->between($existingCheckIn, $existingCheckOut)) ||
+                (($checkInDate->between($existingCheckIn, $existingCheckOut)) ||
                 ($checkOutDate->between($existingCheckIn, $existingCheckOut)) ||
-                ($checkInDate <= $existingCheckIn && $checkOutDate >= $existingCheckOut)
+                ($checkInDate <= $existingCheckIn && $checkOutDate >= $existingCheckOut)) &&
+                ($booking->status == 'paid')
             ) {
                 return response()->json(['error' => 'Room is not available for the selected dates'], 409);
             }
@@ -122,6 +123,7 @@ class BookingController extends Controller
 
         $transaction = Booking::create([
             'user_id' => auth()->user()->id,
+            'room'=> $room->name,
             'room_id' => $request->roomId,
             'check_in_date' => $request->check_in_date,
             'check_out_date' => $request->check_out_date,

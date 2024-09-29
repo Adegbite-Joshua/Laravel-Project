@@ -17,6 +17,7 @@ class CreateBookingsTable extends Migration
             $table->id();
             $table->string('ref');
             $table->string('status');
+            $table->string('room'); 
             $table->foreignId('room_id')->constrained('rooms');
             $table->integer('amount');
             $table->foreignId('user_id')->constrained('users');
