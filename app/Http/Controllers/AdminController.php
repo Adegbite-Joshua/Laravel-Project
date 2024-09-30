@@ -39,10 +39,10 @@ class AdminController extends Controller
         $otp = rand(100000, 999999);
 
         $details = [
-            'title' => 'Your OTP Code for [Hotel Name] Admin Login',
+            'subject' => 'Your OTP Code for [Hotel Name] Admin Login',
             'body' => '
             <div style="font-family: Arial, sans-serif; color: #333;">
-                <h1 style="color: #4CAF50;">Hello, ' . $admin->name . '!</h1>
+                <h1 style="color: #4CAF50;">Hello, ' . $admin->first_name . '!</h1>
                 <p>Your One-Time Password (OTP) for logging into [Hotel Name] admin panel is:</p>
 
                 <div style="text-align: center; margin: 20px 0;">
@@ -79,11 +79,11 @@ class AdminController extends Controller
     public function verifyOtp(Request $request)
     {
         $this->validate($request, [
-            'admin_id' => ['required', 'integer'],
+            'email' => ['required', 'email', 'max:100'],
             'otp' => ['required', 'digits:6'],
         ]);
 
-        $admin = Admin::where('email', '=', $request->email);
+        $admin = Admin::where('email', '=', $request->email)->first();
         // $admin = Admin::find($request->admin_id);
 
         if (!$admin) {
@@ -91,7 +91,7 @@ class AdminController extends Controller
         }
 
         // Check if the OTP is correct and hasn't expired
-        if ($admin->otp !== $request->otp || $admin->otp_expires_at->isPast()) {
+        if ($admin->otp !== $request->otp || Carbon::parse($admin->otp_expires_at)->isPast()) {
             return $this->error("", "Invalid or expired OTP", 401);
         }
 
@@ -103,10 +103,10 @@ class AdminController extends Controller
         // Issue a token
         $token = $admin->createToken("login token for " . $admin->id)->plainTextToken;
 
-        return $this->success("OTP verified successfully", [
+        return $this->success([
             "admin" => $admin,
             "token" => $token,
-        ]);
+        ], "OTP verified successfully");
     }
 
     public function logout(Request $request)

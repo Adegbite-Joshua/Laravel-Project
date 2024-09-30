@@ -13,12 +13,24 @@ use Unicodeveloper\Paystack\Facades\Paystack;
 class BookingController extends Controller
 {
     use HttpResponses;
-    // List all bookings
-    public function index()
-    {
+
+    public function index(Request $request)
+{
+    $start = $request->query('start', 0); 
+    $end = $request->query('end', null); 
+    
+    if ($end !== null) {
+        $limit = $end - $start;
+        $bookings = Booking::skip($start)
+                           ->take($limit)
+                           ->get();
+    } else {
         $bookings = Booking::all();
-        return response()->json($bookings);
     }
+    
+    return response()->json($bookings);
+}
+
 
     // Store a new booking
     public function store(Request $request)
@@ -162,4 +174,39 @@ class BookingController extends Controller
             return response()->json(['error' => 'Payment verification failed'], 500);
         }
     }
+
+    public function getBooking(Request $request)
+    {
+        try {
+            $start = $request->input('start', 0); 
+            $limit = $request->input('limit', 100); 
+    
+            
+            $bookings = Booking::all()->skip($start)->take($limit);
+    
+            return $this->success($bookings, "Successful");
+        } catch (\Throwable $th) {
+            return $this->error(null, "Something went wrong", 500);
+        }
+    }
+
+//     public function getGuestsBooking(Request $request)
+// {
+//     try {
+//         // Retrieve pagination parameters from the request (if provided)
+//         $start = $request->input('start', 0); // Default to 0 if not provided
+//         $limit = $request->input('limit', 100); // Default to 100 if not provided
+
+//         // Fetch bookings with 'success' status and apply start and limit for range
+//         $bookings = Booking::where('status', '=', 'success')
+//             ->skip($start)
+//             ->take($limit)
+//             ->get();
+
+//         return $this->success($bookings, "Successful");
+//     } catch (\Throwable $th) {
+//         return $this->error(null, "Something went wrong", 500);
+//     }
+// }
+
 }
