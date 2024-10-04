@@ -23,7 +23,7 @@ class RoomFactory extends Factory
             'type' => $this->faker->randomElement(['Single', 'Double', 'Suite', 'VIP']),
             'next_free' => $this->faker->date('Y-m-d'),
             'facilities' => $this->faker->words(3, true),
-            'category' => $this->faker->word,
+            'category' => $this->faker->randomElement(['Single', 'Double', 'Suite', 'VIP']),
             'occupied' => $this->faker->boolean,
             'check_in_date' => $this->faker->date('Y-m-d'),
             'check_out_date' => $this->faker->date('Y-m-d'),

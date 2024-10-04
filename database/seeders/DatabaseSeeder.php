@@ -24,7 +24,7 @@ class DatabaseSeeder extends Seeder
         // Room::factory()
         //     ->has(RoomImage::factory()->count(5), 'images')
         //     ->has(Reservation::factory()->count(3), 'reservations')
-        //     ->count(10)
+        //     ->count(25)
         //     ->create();
 
         // Review::factory(20)->create();

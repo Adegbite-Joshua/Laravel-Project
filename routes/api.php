@@ -55,14 +55,14 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 });
 
-Route::prefix('admin')->middleware(['auth:sanctum', 'auth:admin'])->group(function () {
-    // Route::middleware('role:admin')->group(function () {
+// Route::prefix('admin')->middleware('auth:sanctum')->group(function () {
+    Route::prefix('admin')->group(function () {
         Route::get('/details', [AdminController::class, 'user']);
         Route::resource('/rooms', RoomController::class);
         Route::resource('/bookings', BookingController::class);
         Route::post('/guests', [BookingController::class, 'getGuestsBooking']);
         Route::get('/metrics', [AdminController::class, 'getMetrics']);
-    // });
-});
+    });
+// });
 Route::resource('/admin/bookings', BookingController::class);
 

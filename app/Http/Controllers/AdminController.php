@@ -35,35 +35,8 @@ class AdminController extends Controller
 
         $admin = Auth::guard('admin')->user();
 
-        // Generate OTP
         $otp = rand(100000, 999999);
 
-        $details = [
-            'subject' => 'Your OTP Code for [Hotel Name] Admin Login',
-            'body' => '
-            <div style="font-family: Arial, sans-serif; color: #333;">
-                <h1 style="color: #4CAF50;">Hello, ' . $admin->first_name . '!</h1>
-                <p>Your One-Time Password (OTP) for logging into [Hotel Name] admin panel is:</p>
-
-                <div style="text-align: center; margin: 20px 0;">
-                    <h2 style="color: #4CAF50;">' . $otp . '</h2>
-                </div>
-
-                <p>This OTP will expire in 10 minutes. Please use it to complete your login process.</p>
-
-                <p>If you did not request this login, please contact our support team immediately.</p>
-
-                <p>Warm regards,</p>
-                <p>The [Hotel Name] Team</p>
-
-                <p style="margin-top: 20px; font-size: 12px; color: #777;">
-                    © ' . date('Y') . ' [Hotel Name]. All rights reserved. | <a href="https://example.com/privacy-policy" style="color: #4CAF50;">Privacy Policy</a>
-                </p>
-            </div>
-        ',
-        ];
-
-        // Save OTP and expiration timestamp to the admin record
         $admin->otp = $otp;
         $admin->otp_expires_at = now()->addMinutes(10); // OTP expires in 10 minutes
         $admin->save();
@@ -75,16 +48,18 @@ class AdminController extends Controller
             "message" => "OTP has been sent to your email.",
         ]);
     }
-
     public function verifyOtp(Request $request)
     {
         $this->validate($request, [
             'email' => ['required', 'email', 'max:100'],
+            'password' => ['required', 'string'],
             'otp' => ['required', 'digits:6'],
         ]);
 
-        $admin = Admin::where('email', '=', $request->email)->first();
-        // $admin = Admin::find($request->admin_id);
+        // if (!Auth::guard('admin')->attempt($request->only('email', 'password'))) {
+        //     return $this->error("", "Credentials do not match", 401);
+        // }
+        $admin = Auth::guard('admin')->user();
 
         if (!$admin) {
             return $this->error("", "Admin not found", 404);
@@ -108,6 +83,11 @@ class AdminController extends Controller
             "token" => $token,
         ], "OTP verified successfully");
     }
+    public function user()
+    {
+        $admin = Auth::guard('admin')->user();
+        return $this->success($admin, null, 200);
+    }
 
     public function logout(Request $request)
     {
@@ -127,12 +107,6 @@ class AdminController extends Controller
         return $this->success([
             "admin" => $admin,
         ], "Account created successfully");
-    }
-
-    public function user()
-    {
-        $admin = Auth::guard('admin')->user();
-        return $this->success($admin, null, 200);
     }
 
     public function getMetrics(Request $request)
@@ -168,6 +142,29 @@ class AdminController extends Controller
             $monthlyBookings[$month] = $count;
         }
 
+        
+        $categories = ['single', 'double', 'suite', 'vip'];
+
+        
+        $rooms_data = [];
+
+        foreach ($categories as $category) {
+            
+            $totalRooms = Room::where('category', $category)->count();
+
+            $averagePrice = Room::where('category', $category)->average('price');
+
+            $bookedCount = Room::where('category', $category)
+                ->where('booking_status', 'booked') 
+                ->count();
+
+                $rooms_data[$category] = [
+                'price' => $averagePrice ?: 0, // Default to 0 if no rooms exist
+                'booked' => $bookedCount,
+                'total_rooms' => $totalRooms
+            ];
+        }
+
         return $this->success([
             'check_in' => $created_today,
             'check_out' => $checked_out_today,
@@ -180,6 +177,7 @@ class AdminController extends Controller
                 'VIP' => $vip_metric,
             ],
             'monthlyBookings' => $monthlyBookings,
+            'rooms' => $rooms_data
         ]);
     }
 }

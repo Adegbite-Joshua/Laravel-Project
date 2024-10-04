@@ -66,10 +66,10 @@ class BookingController extends Controller
     {
         $validated = $request->validate([
             // 'room_id' => 'integer',
-            'amount' => 'integer',
+            // 'amount' => 'integer',
             // 'user_id' => 'integer',
-            'date_in' => 'date',
-            'date_out' => 'date',
+            // 'date_in' => 'date',
+            // 'date_out' => 'date',
             'status' => 'string',
         ]);
 
@@ -190,23 +190,20 @@ class BookingController extends Controller
         }
     }
 
-//     public function getGuestsBooking(Request $request)
-// {
-//     try {
-//         // Retrieve pagination parameters from the request (if provided)
-//         $start = $request->input('start', 0); // Default to 0 if not provided
-//         $limit = $request->input('limit', 100); // Default to 100 if not provided
+    public function getGuestsBooking(Request $request)
+{
+    try {
+        // Retrieve pagination parameters from the request (if provided)
+        $start = $request->input('start', 0); // Default to 0 if not provided
+        $limit = $request->input('limit', 100); // Default to 100 if not provided
 
-//         // Fetch bookings with 'success' status and apply start and limit for range
-//         $bookings = Booking::where('status', '=', 'success')
-//             ->skip($start)
-//             ->take($limit)
-//             ->get();
+        // Fetch bookings with 'success' status and apply start and limit for range
+        $bookings = Booking::all()->skip($start)->take($limit);
 
-//         return $this->success($bookings, "Successful");
-//     } catch (\Throwable $th) {
-//         return $this->error(null, "Something went wrong", 500);
-//     }
-// }
+        return $this->success($bookings, "Successful");
+    } catch (\Throwable $th) {
+        return $this->error(null, "Something went wrong", 500);
+    }
+}
 
 }
