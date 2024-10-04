@@ -68,7 +68,7 @@ class AdminController extends Controller
         $admin->otp_expires_at = now()->addMinutes(10); // OTP expires in 10 minutes
         $admin->save();
 
-        Mail::to($admin->email)->send(new CustomEmail($details));
+        // Mail::to($admin->email)->send(new CustomEmail($details));
 
         return $this->success("OTP sent to your email. Please verify.", [
             "admin_id" => $admin->id,
@@ -131,7 +131,8 @@ class AdminController extends Controller
 
     public function user()
     {
-        return $this->success(Auth::guard('admin')->user(), null, 200);
+        $admin = Auth::guard('admin')->user();
+        return $this->success($admin, null, 200);
     }
 
     public function getMetrics(Request $request)

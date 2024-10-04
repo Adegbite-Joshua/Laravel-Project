@@ -56,14 +56,13 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 Route::middleware(['auth:sanctum', 'auth:admin'])->group(function () {
-    Route::middleware('role:admin')->group(function () {
+    // Route::middleware('role:admin')->group(function () {
         Route::get('/admin/details', [AdminController::class, 'user']);
         Route::resource('/admin/rooms', RoomController::class);
         Route::resource('/admin/bookings', BookingController::class);
-        Route::get('/admin/metrics', [AdminController::class, 'getMetrics']);
         Route::post('/admin/guests', [BookingController::class, 'getGuestsBooking']);
-        
-    });
+        Route::get('/admin/metrics', [AdminController::class, 'getMetrics']);
+    // });
 });
 Route::resource('/admin/bookings', BookingController::class);
 

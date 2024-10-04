@@ -29,6 +29,6 @@ class DatabaseSeeder extends Seeder
 
         // Review::factory(20)->create();
         // Admin::factory(20)->create();
-        Booking::factory(20)->create();
+        // Booking::factory(20)->create();
     }
 }
