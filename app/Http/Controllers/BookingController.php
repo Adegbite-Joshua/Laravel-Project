@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Booking;
 use App\Models\Room;
+use App\Models\User;
 use App\Traits\HttpResponses;
 use Auth;
 use Carbon\Carbon;
@@ -15,24 +16,22 @@ class BookingController extends Controller
     use HttpResponses;
 
     public function index(Request $request)
-{
-    $start = $request->query('start', 0); 
-    $end = $request->query('end', null); 
-    
-    if ($end !== null) {
-        $limit = $end - $start;
-        $bookings = Booking::skip($start)
-                           ->take($limit)
-                           ->get();
-    } else {
-        $bookings = Booking::all();
+    {
+        $start = $request->query('start', 0);
+        $end = $request->query('end', null);
+
+        if ($end !== null) {
+            $limit = $end - $start;
+            $bookings = Booking::skip($start)
+                ->take($limit)
+                ->get();
+        } else {
+            $bookings = Booking::all();
+        }
+
+        return response()->json($bookings);
     }
-    
-    return response()->json($bookings);
-}
 
-
-    // Store a new booking
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -51,7 +50,6 @@ class BookingController extends Controller
         ], 201); // 201 status code for created resource
     }
 
-    // Show a single booking
     public function show(Booking $booking)
     {
         if (Auth::user() && Auth::user()->id != $booking->user_id) {
@@ -61,7 +59,6 @@ class BookingController extends Controller
         response()->json($booking);
     }
 
-    // Update an existing booking
     public function update(Request $request, Booking $booking)
     {
         $validated = $request->validate([
@@ -81,7 +78,6 @@ class BookingController extends Controller
         ]);
     }
 
-    // Delete a booking
     public function destroy(Booking $booking)
     {
         $booking->delete();
@@ -107,7 +103,7 @@ class BookingController extends Controller
             return response()->json(['error' => 'Room not found'], 404);
         }
 
-        $checkInDate = Carbon::parse($request->check_in_date);
+        $checkInDate = Carbon::parse($request->check_in_date, );
         $checkOutDate = Carbon::parse($request->check_out_date);
 
         $bookings = Booking::where('room_id', $request->roomId)->get();
@@ -118,8 +114,8 @@ class BookingController extends Controller
 
             if (
                 (($checkInDate->between($existingCheckIn, $existingCheckOut)) ||
-                ($checkOutDate->between($existingCheckIn, $existingCheckOut)) ||
-                ($checkInDate <= $existingCheckIn && $checkOutDate >= $existingCheckOut)) &&
+                    ($checkOutDate->between($existingCheckIn, $existingCheckOut)) ||
+                    ($checkInDate <= $existingCheckIn && $checkOutDate >= $existingCheckOut)) &&
                 ($booking->status == 'paid')
             ) {
                 return response()->json(['error' => 'Room is not available for the selected dates'], 409);
@@ -135,7 +131,7 @@ class BookingController extends Controller
 
         $transaction = Booking::create([
             'user_id' => auth()->user()->id,
-            'room'=> $room->name,
+            'room' => $room->name,
             'room_id' => $request->roomId,
             'check_in_date' => $request->check_in_date,
             'check_out_date' => $request->check_out_date,
@@ -164,7 +160,7 @@ class BookingController extends Controller
                 $transaction = Booking::where('ref', $transactionRef)->first();
                 // Booking::update('ref', $transactionRef)
                 $transaction->update([
-                   'status' => 'paid'
+                    'status' => 'paid',
                 ]);
                 return response()->json(['success' => true, 'data' => $paymentDetails, 'transaction' => $transaction]);
             } else {
@@ -178,12 +174,11 @@ class BookingController extends Controller
     public function getBooking(Request $request)
     {
         try {
-            $start = $request->input('start', 0); 
-            $limit = $request->input('limit', 100); 
-    
-            
+            $start = $request->input('start', 0);
+            $limit = $request->input('limit', 100);
+
             $bookings = Booking::all()->skip($start)->take($limit);
-    
+
             return $this->success($bookings, "Successful");
         } catch (\Throwable $th) {
             return $this->error(null, "Something went wrong", 500);
@@ -191,19 +186,71 @@ class BookingController extends Controller
     }
 
     public function getGuestsBooking(Request $request)
-{
-    try {
-        // Retrieve pagination parameters from the request (if provided)
-        $start = $request->input('start', 0); // Default to 0 if not provided
-        $limit = $request->input('limit', 100); // Default to 100 if not provided
+    {
+        try {
+            // Retrieve pagination parameters from the request (if provided)
+            $start = $request->input('start', 0); // Default to 0 if not provided
+            $limit = $request->input('limit', 100); // Default to 100 if not provided
 
-        // Fetch bookings with 'success' status and apply start and limit for range
-        $bookings = Booking::all()->skip($start)->take($limit);
+            // Fetch bookings with 'success' status and apply start and limit for range
+            $bookings = Booking::all()->skip($start)->take($limit);
 
-        return $this->success($bookings, "Successful");
-    } catch (\Throwable $th) {
-        return $this->error(null, "Something went wrong", 500);
+            return $this->success($bookings, "Successful");
+        } catch (\Throwable $th) {
+            return $this->error(null, "Something went wrong", 500);
+        }
     }
-}
 
+    public function adminCreateBooking(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'amount' => 'required|numeric',
+            'roomId' => 'required|integer',
+            'check_in_date' => 'required|date',
+            'check_out_date' => 'required|date',
+        ]);
+
+        $room = Room::find($request->roomId);
+        $user = User::where('email', $request->email)->first();
+
+        if (!$room) {
+            return response()->json(['error' => 'Room not found'], 404);
+        }
+        if (!$user) {
+            return response()->json(['error' => 'User not found'], 404);
+        }
+
+        $checkInDate = Carbon::parse($request->check_in_date, );
+        $checkOutDate = Carbon::parse($request->check_out_date);
+
+        $bookings = Booking::where('room_id', $request->roomId)->get();
+
+        foreach ($bookings as $booking) {
+            $existingCheckIn = Carbon::parse($booking->check_in_date);
+            $existingCheckOut = Carbon::parse($booking->check_out_date);
+
+            if (
+                (($checkInDate->between($existingCheckIn, $existingCheckOut)) ||
+                    ($checkOutDate->between($existingCheckIn, $existingCheckOut)) ||
+                    ($checkInDate <= $existingCheckIn && $checkOutDate >= $existingCheckOut)) &&
+                ($booking->status == 'paid')
+            ) {
+                return response()->json(['error' => 'Room is not available for the selected dates'], 409);
+            }
+        }
+
+        $transaction = Booking::create([
+            'user_id' => $user->id,
+            'room' => $room->name,
+            'room_id' => $request->roomId,
+            'check_in_date' => $request->check_in_date,
+            'check_out_date' => $request->check_out_date,
+            'amount' => $request->amount,
+            'ref' => Paystack::genTranxRef(),
+            'status' => 'paid',
+        ]);
+
+        return response()->json(['transaction' => $transaction]);
+    }
 }

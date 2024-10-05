@@ -51,7 +51,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/user/details', [AuthController::class, 'user']);
         Route::resource('/bookings', BookingController::class)->only(['store', 'show']);
         Route::post('/payment/initialize', [BookingController::class, 'initializePayment']);
-        
     });
 });
 
@@ -60,9 +59,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/details', [AdminController::class, 'user']);
         Route::resource('/rooms', RoomController::class);
         Route::resource('/bookings', BookingController::class);
+        Route::post('/create-booking', [BookingController::class, 'adminCreateBooking']);
         Route::post('/guests', [BookingController::class, 'getGuestsBooking']);
         Route::get('/metrics', [AdminController::class, 'getMetrics']);
     });
 // });
-Route::resource('/admin/bookings', BookingController::class);
+// Route::resource('/admin/bookings', BookingController::class);
 
