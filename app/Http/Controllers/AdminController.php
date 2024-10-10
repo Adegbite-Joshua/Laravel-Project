@@ -89,6 +89,32 @@ class AdminController extends Controller
         return $this->success($admin, null, 200);
     }
 
+    public function update(Request $request, Admin $admin)
+    {
+        $this->validate( $request,
+            ['first_name'=> ["string", "max:40"],
+            'last_name'=> ["string", "max:40"],
+            'email'=> ["email", "max:100", "unique:admins"],
+            'password' => ["string"],
+            'image' => ["string"],
+            'used_google_oauth' => ["boolean"],
+            'gender' => ["string", "in:male,female"],
+            'city'=> ["string", "max:40"],
+            'zip_code'=> ["string", "max:40"],
+            'address'=> ["string", "max:255"]]
+        );
+        if ($request->password) {
+            $request->merge(['password' => Hash::make($request['password'])]);
+        }
+
+        $admin->update($request);
+
+        return response()->json([
+            'message' => 'Details updated successfully',
+            'details' => $admin,
+        ]);
+    }
+
     public function logout(Request $request)
     {
 

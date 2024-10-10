@@ -30,7 +30,6 @@ class Admin extends Authenticatable implements MustVerifyEmail
         'used_google_oauth',
         'gender',
         'role',
-        'image',
         'nin_number',
         'city',
         'zip_code',

@@ -57,6 +57,7 @@ Route::middleware('auth:sanctum')->group(function () {
 // Route::prefix('admin')->middleware('auth:sanctum')->group(function () {
     Route::prefix('admin')->group(function () {
         Route::get('/details', [AdminController::class, 'user']);
+        Route::patch('/details', [AdminController::class, 'update']);
         Route::resource('/rooms', RoomController::class);
         Route::resource('/bookings', BookingController::class);
         Route::post('/create-booking', [BookingController::class, 'adminCreateBooking']);
