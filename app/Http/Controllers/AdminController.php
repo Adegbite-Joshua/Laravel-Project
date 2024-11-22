@@ -15,39 +15,44 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Mail;
+use Session;
 
 class AdminController extends Controller
 {
     protected $table = 'admins';
     use HttpResponses;
-
+    
     public function login(Request $request)
     {
         $this->validate($request, [
             'email' => ['required', 'email', 'max:100'],
             'password' => ['required', 'string'],
         ]);
-
+    
         // Attempt to authenticate the admin
         if (!Auth::guard('admin')->attempt($request->only('email', 'password'))) {
             return $this->error("", "Credentials do not match", 401);
         }
-
+    
         $admin = Auth::guard('admin')->user();
-
+    
         $otp = rand(100000, 999999);
-
         $admin->otp = $otp;
         $admin->otp_expires_at = now()->addMinutes(10); // OTP expires in 10 minutes
         $admin->save();
-
+    
+        // Store the admin ID in the session for later use
+        Session::put('admin_id', $admin->id);
+    
+        // Uncomment to send OTP email
         // Mail::to($admin->email)->send(new CustomEmail($details));
-
+    
         return $this->success("OTP sent to your email. Please verify.", [
             "admin_id" => $admin->id,
             "message" => "OTP has been sent to your email.",
         ]);
     }
+    
     public function verifyOtp(Request $request)
     {
         $this->validate($request, [
@@ -55,39 +60,58 @@ class AdminController extends Controller
             'password' => ['required', 'string'],
             'otp' => ['required', 'digits:6'],
         ]);
-
-        // if (!Auth::guard('admin')->attempt($request->only('email', 'password'))) {
-        //     return $this->error("", "Credentials do not match", 401);
-        // }
+    
+        // Attempt to re-authenticate the admin with the given credentials
+        if (!Auth::guard('admin')->attempt($request->only('email', 'password'))) {
+            return $this->error("", "Credentials do not match", 401);
+        }
+    
         $admin = Auth::guard('admin')->user();
-
+    
+        // Ensure the admin is found after re-authentication
         if (!$admin) {
             return $this->error("", "Admin not found", 404);
         }
-
+    
         // Check if the OTP is correct and hasn't expired
         if ($admin->otp !== $request->otp || Carbon::parse($admin->otp_expires_at)->isPast()) {
             return $this->error("", "Invalid or expired OTP", 401);
         }
-
+    
         // Clear the OTP fields after successful verification
         $admin->otp = null;
         $admin->otp_expires_at = null;
         $admin->save();
-
+    
         // Issue a token
         $token = $admin->createToken("login token for " . $admin->id)->plainTextToken;
-
+    
         return $this->success([
             "admin" => $admin,
             "token" => $token,
         ], "OTP verified successfully");
     }
+    
+    
     public function user()
     {
+        // Retrieve the admin ID from the session
+        $adminId = Session::get('admin_id');
+    
+        if (!$adminId) {
+            return $this->error("", "Admin not authenticated", 401);
+        }
+    
+        // Get the authenticated admin using the admin guard
         $admin = Auth::guard('admin')->user();
+    
+        if (!$admin) {
+            return $this->error("", "Admin not found", 404);
+        }
+    
         return $this->success($admin, null, 200);
     }
+    
 
     public function update(Request $request, Admin $admin)
     {
